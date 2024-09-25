@@ -89,10 +89,10 @@ int main(int argc, char* argv[])
 	
 	if (argc < 2) {
 		std::cout << "Usage: extract-psyq-symbols -i [input] -o [output] <-p [prefix]> <-s [suffix]>\n\n"
-                     "[input]       - Input symbol file\n"
-			         "[output]      - Output file\n"
-			         "<-p [prefix]> - Add prefix to search for\n"
-			         "<-s [suffix]> - Add suffix to search for\n";
+		             "[input]       - Input symbol file\n"
+		             "[output]      - Output file\n"
+		             "<-p [prefix]> - Add prefix to search for\n"
+		             "<-s [suffix]> - Add suffix to search for\n";
 		return -1;
 	}
 
