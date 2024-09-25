@@ -26,6 +26,35 @@ struct symbol {
 	unsigned long value;
 };
 
+static int check_argument(const int argc, char* argv[], int& index, const std::string& option)
+{
+	if (strcmp(argv[index], ("-" + option).c_str()) == 0) {
+		if (++index >= argc) {
+			std::cout << "Error: Missing parameter for \"-" << option << "\"\n";
+			return -1;
+		}
+		return 1;
+	}
+	return 0;
+}
+
+static bool string_starts_with(const std::string& str, const std::string& prefix)
+{
+	return str.size() >= prefix.size() && str.compare(0, prefix.size(), prefix) == 0;
+}
+
+static bool string_ends_with(const std::string& str, const std::string& suffix)
+{
+	return str.size() >= suffix.size() && str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
+
+static std::string string_to_upper(const std::string& str)
+{
+	std::string lower_str = str;
+	std::transform(lower_str.begin(), lower_str.end(), lower_str.begin(), [](unsigned char c) { return std::toupper(c); });
+	return lower_str;
+}
+
 static bool compare_symbols(const symbol symbol_1, const symbol symbol_2)
 {
 	return symbol_1.value < symbol_2.value;
@@ -52,22 +81,81 @@ static bool read_input(std::ifstream& input, char* const read_buffer, const std:
 
 int main(int argc, char* argv[])
 {
-	std::vector<symbol> symbols;
+	std::vector<symbol>      symbols;
+	std::string              input_file = "";
+	std::string              output_file = "";
+	std::vector<std::string> prefixes;
+	std::vector<std::string> suffixes;
 	
-	if (argc < 3) {
-		std::cout << "Usage: extract-psyq-symbols [input] [output]\n";
+	if (argc < 2) {
+		std::cout << "Usage: extract-psyq-symbols -i [input] -o [output] <-p [prefix]> <-s [suffix]>\n\n"
+                     "[input]       - Input symbol file\n"
+			         "[output]      - Output file\n"
+			         "<-p [prefix]> - Add prefix to search for\n"
+			         "<-s [suffix]> - Add suffix to search for\n";
 		return -1;
 	}
 
-	std::ifstream input(argv[1], std::ios::in | std::ios::binary);
+	for (int i = 1; i < argc; i++) {
+		int success;
+		if ((success = check_argument(argc, argv, i, "i")) < 0) {
+			return -1;
+		} else if (success > 0) {
+			if (!input_file.empty()) {
+				std::cout << "Error: Input symbol file already defined.\n";
+				return -1;
+			}
+			input_file = argv[i];
+			continue;
+		}
+
+		if ((success = check_argument(argc, argv, i, "o")) < 0) {
+			return -1;
+		} else if (success > 0) {
+			if (!output_file.empty()) {
+				std::cout << "Error: Output file already defined.\n";
+				return -1;
+			}
+			output_file = argv[i];
+			continue;
+		}
+
+		if ((success = check_argument(argc, argv, i, "p")) < 0) {
+			return -1;
+		} else if (success > 0) {
+			prefixes.push_back(string_to_upper(argv[i]));
+			continue;
+		}
+
+		if ((success = check_argument(argc, argv, i, "s")) < 0) {
+			return -1;
+		} else if (success > 0) {
+			suffixes.push_back(string_to_upper(argv[i]));
+			continue;
+		}
+
+		std::cout << "Error: Unknown argument \"" << argv[i] << "\".\n";
+		return -1;
+	}
+
+	if (input_file.empty()) {
+		std::cout << "Error: Input symbol file not defined.\n";
+		return -1;
+	}
+	if (output_file.empty()) {
+		std::cout << "Error: Output symbol file not defined.\n";
+		return -1;
+	}
+
+	std::ifstream input(input_file, std::ios::in | std::ios::binary);
 	if (!input.is_open()) {
-		std::cout << "Error: Cannot open \"" << argv[1] << "\" for reading.\n";
+		std::cout << "Error: Cannot open \"" << input_file << "\" for reading.\n";
 		return -1;
 	}
 
-	std::ofstream output(argv[2], std::ios::out);
+	std::ofstream output(output_file, std::ios::out);
 	if (!output.is_open()) {
-		std::cout << "Error: Cannot open \"" << argv[2] << "\" for writing.\n";
+		std::cout << "Error: Cannot open \"" << output_file << "\" for writing.\n";
 		return -1;
 	}
 
@@ -78,7 +166,7 @@ int main(int argc, char* argv[])
 	read_buffer[3] = '\0';
 
 	if (strcmp(read_buffer, "MND")) {
-		std::cout << "Error: \"" << argv[1] << "\" is not a value PSY-Q symbol file.\n";
+		std::cout << "Error: \"" << input_file << "\" is not a value Psy-Q symbol file.\n";
 		return -1;
 	}
 
@@ -111,13 +199,32 @@ int main(int argc, char* argv[])
 		if (!read_input(input, name_buffer, value_buffer)) {
 			return -1;
 		}
-		for (int i = 0; i < value_buffer; i++) {
-			name_buffer[i] = std::toupper(name_buffer[i]);
-		}
 		name_buffer[value_buffer] = '\0';
 
-		symbols.push_back({ name_buffer, value });
+		std::string name = string_to_upper(name_buffer);
 		delete[] name_buffer;
+
+		bool add = prefixes.empty() && suffixes.empty();
+		if (!prefixes.empty()) {
+			for (const auto& prefix : prefixes) {
+				if (string_starts_with(name, prefix)) {
+					add = true;
+					break;
+				}
+			}
+		}
+		if (!suffixes.empty()) {
+			for (const auto& suffix : suffixes) {
+				if (string_ends_with(name, suffix)) {
+					add = true;
+					break;
+				}
+			}
+		}
+
+		if (add) {
+			symbols.push_back({ name, value });
+		}
 	}
 
 	if ((line_length & 7) != 0) {
@@ -128,8 +235,8 @@ int main(int argc, char* argv[])
 	std::sort(symbols.begin(), symbols.end(), compare_symbols);
 
 	output << "; ------------------------------------------------------------------------------\n"
-		      "; Symbols extracted from\n; " << argv[1] << "\n"
-		      "; ------------------------------------------------------------------------------\n\n";
+	          "; Symbols extracted from\n; " << input_file << "\n"
+	          "; ------------------------------------------------------------------------------\n\n";
 
 	for (auto& symbol : symbols) {
 		output << std::left << std::setw(line_length) << symbol.name << "equ ";

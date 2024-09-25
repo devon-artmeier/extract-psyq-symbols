@@ -7,9 +7,7 @@
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "buildRoot": "${projectDir}\\out\\build\\${name}",
       "installRoot": "${projectDir}\\out\\install\\${name}",
-      "cmakeCommandArgs": "",
-      "buildCommandArgs": "",
-      "ctestCommandArgs": ""
+      "buildCommandArgs": ""
     },
     {
       "name": "x86-Debug",
@@ -20,8 +18,7 @@
       "cmakeCommandArgs": "",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
-      "inheritEnvironments": [ "msvc_x86" ],
-      "variables": []
+      "inheritEnvironments": [ "msvc_x86" ]
     },
     {
       "name": "x86-Release",
@@ -32,8 +29,7 @@
       "cmakeCommandArgs": "",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
-      "inheritEnvironments": [ "msvc_x86" ],
-      "variables": []
+      "inheritEnvironments": [ "msvc_x86" ]
     },
     {
       "name": "x64-Release",
@@ -44,8 +40,7 @@
       "cmakeCommandArgs": "",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
-      "inheritEnvironments": [ "msvc_x64_x64" ],
-      "variables": []
+      "inheritEnvironments": [ "msvc_x64_x64" ]
     }
   ]
 }
