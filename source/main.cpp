@@ -187,7 +187,11 @@ int main(int argc, char* argv[])
 			value |= value_buffer << (i << 3);
 		}
 
-		input.seekg(1, std::ios_base::cur);
+		char symbol_type;
+		if (!read_input(input, &symbol_type, 1)) {
+			return -1;
+		}
+
 		if (!read_input(input, reinterpret_cast<char*>(&value_buffer), 1)) {
 			return -1;
 		}
@@ -204,7 +208,7 @@ int main(int argc, char* argv[])
 		std::string name = string_to_upper(name_buffer);
 		delete[] name_buffer;
 
-		bool add = prefixes.empty() && suffixes.empty();
+		bool add = symbol_type == 2 && prefixes.empty() && suffixes.empty();
 		if (!prefixes.empty()) {
 			for (const auto& prefix : prefixes) {
 				if (string_starts_with(name, prefix)) {
