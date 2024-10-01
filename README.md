@@ -4,7 +4,8 @@ This is a tool to extract symbols from a PSY-Q generated symbol file.
 
 ## Usage
 
-    extract-psyq-symbols -i [input] -o [output] <-f [symbol]> <-x [symbol]> <-p [prefix]> <-xp [prefix]> <-s [suffix]> <-xs [suffix]>
+    extract-psyq-symbols -i [input] -o [output] <-f [symbol]> <-x [symbol]> <-p [prefix]> <-xp [prefix]> <-s [suffix]> <-xs [suffix]> <-xe> <-xl>
+    
     -i [input]     - Input symbol file
     -o [output]    - Output file
     <-f [symbol]>  - Force include symbol
@@ -13,3 +14,5 @@ This is a tool to extract symbols from a PSY-Q generated symbol file.
     <-xp [prefix]> - Exclude symbols with prefix
     <-s [suffix]>  - Only include symbols with suffix
     <-xs [suffix]> - Exclude symbols with suffix
+    <-xe>          - Exclude equates
+    <-xl>          - Exclude labels

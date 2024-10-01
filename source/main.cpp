@@ -90,9 +90,11 @@ int main(int argc, char* argv[])
 	std::vector<std::string> symbol_excludes;
 	std::vector<std::string> prefix_excludes;
 	std::vector<std::string> suffix_excludes;
+	bool                     exclude_equates = false;
+	bool                     exclude_labels = false;
 	
 	if (argc < 2) {
-		std::cout << "Usage: extract-psyq-symbols -i [input] -o [output] <-f [symbol]> <-x [symbol]> <-p [prefix]> <-xp [prefix]> <-s [suffix]> <-xs [suffix]>\n\n"
+		std::cout << "Usage: extract-psyq-symbols -i [input] -o [output] <-f [symbol]> <-x [symbol]> <-p [prefix]> <-xp [prefix]> <-s [suffix]> <-xs [suffix]> <-xe> <-xl>\n\n"
 		             "-i [input]     - Input symbol file\n"
 		             "-o [output]    - Output file\n"
 					 "<-f [symbol]>  - Force include symbol"
@@ -100,7 +102,9 @@ int main(int argc, char* argv[])
 		             "<-p [prefix]>  - Only include symbols with prefix\n"
 		             "<-xp [prefix]> - Exclude symbols with prefix\n"
 		             "<-s [suffix]>  - Only include symbols with suffix\n"
-		             "<-xs [suffix]> - Exclude symbols with suffix\n";
+		             "<-xs [suffix]> - Exclude symbols with suffix\n"
+		             "<-xe>          - Exclude equates\n"
+		             "<-xl>          - Exclude labels\n";
 		return -1;
 	}
 
@@ -168,6 +172,16 @@ int main(int argc, char* argv[])
 			return -1;
 		} else if (success > 0) {
 			suffix_excludes.push_back(string_to_upper(argv[i]));
+			continue;
+		}
+
+		if (strcmp(argv[i], "-xe") == 0) {
+			exclude_equates = true;
+			continue;
+		}
+
+		if (strcmp(argv[i], "-xl") == 0) {
+			exclude_labels = true;
 			continue;
 		}
 
@@ -284,6 +298,14 @@ int main(int argc, char* argv[])
 				add = false;
 				break;
 			}
+		}
+
+		if (symbol_type == 1 && exclude_equates) {
+			add = false;
+		}
+
+		if (symbol_type == 2 && exclude_labels) {
+			add = false;
 		}
 
 		if (add) {
