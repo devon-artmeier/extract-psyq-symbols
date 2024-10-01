@@ -84,17 +84,23 @@ int main(int argc, char* argv[])
 	std::vector<symbol>      symbols;
 	std::string              input_file = "";
 	std::string              output_file = "";
-	std::vector<std::string> prefixes;
-	std::vector<std::string> suffixes;
-	std::vector<std::string> excludes;
+	std::vector<std::string> symbol_includes;
+	std::vector<std::string> prefix_includes;
+	std::vector<std::string> suffix_includes;
+	std::vector<std::string> symbol_excludes;
+	std::vector<std::string> prefix_excludes;
+	std::vector<std::string> suffix_excludes;
 	
 	if (argc < 2) {
-		std::cout << "Usage: extract-psyq-symbols -i [input] -o [output] <-p [prefix]> <-s [suffix]> <-x [exclude]>\n\n"
-		             "[input]        - Input symbol file\n"
-		             "[output]       - Output file\n"
-		             "<-p [prefix]>  - Add prefix to search for\n"
-		             "<-s [suffix]>  - Add suffix to search for\n"
-					 "<-x [exclude]> - Exclude symbol";
+		std::cout << "Usage: extract-psyq-symbols -i [input] -o [output] <-f [symbol]> <-x [symbol]> <-p [prefix]> <-xp [prefix]> <-s [suffix]> <-xs [suffix]>\n\n"
+		             "-i [input]     - Input symbol file\n"
+		             "-o [output]    - Output file\n"
+					 "<-f [symbol]>  - Force include symbol"
+					 "<-x [symbol]>  - Exclude symbol"
+		             "<-p [prefix]>  - Only include symbols with prefix\n"
+		             "<-xp [prefix]> - Exclude symbols with prefix\n"
+		             "<-s [suffix]>  - Only include symbols with suffix\n"
+		             "<-xs [suffix]> - Exclude symbols with suffix\n";
 		return -1;
 	}
 
@@ -122,24 +128,46 @@ int main(int argc, char* argv[])
 			continue;
 		}
 
+		if ((success = check_argument(argc, argv, i, "f")) < 0) {
+			return -1;
+		}
+		else if (success > 0) {
+			symbol_includes.push_back(string_to_upper(argv[i]));
+			continue;
+		}
+
 		if ((success = check_argument(argc, argv, i, "p")) < 0) {
 			return -1;
 		} else if (success > 0) {
-			prefixes.push_back(string_to_upper(argv[i]));
+			prefix_includes.push_back(string_to_upper(argv[i]));
 			continue;
 		}
 
 		if ((success = check_argument(argc, argv, i, "s")) < 0) {
 			return -1;
 		} else if (success > 0) {
-			suffixes.push_back(string_to_upper(argv[i]));
+			suffix_includes.push_back(string_to_upper(argv[i]));
 			continue;
 		}
 
 		if ((success = check_argument(argc, argv, i, "x")) < 0) {
 			return -1;
 		} else if (success > 0) {
-			excludes.push_back(string_to_upper(argv[i]));
+			symbol_excludes.push_back(string_to_upper(argv[i]));
+			continue;
+		}
+
+		if ((success = check_argument(argc, argv, i, "xp")) < 0) {
+			return -1;
+		} else if (success > 0) {
+			prefix_excludes.push_back(string_to_upper(argv[i]));
+			continue;
+		}
+
+		if ((success = check_argument(argc, argv, i, "xs")) < 0) {
+			return -1;
+		} else if (success > 0) {
+			suffix_excludes.push_back(string_to_upper(argv[i]));
 			continue;
 		}
 
@@ -213,41 +241,58 @@ int main(int argc, char* argv[])
 
 		std::string name = string_to_upper(name_buffer);
 		delete[] name_buffer;
-
-		bool add = symbol_type == 2 && prefixes.empty() && suffixes.empty();
 		
-		if (!prefixes.empty()) {
-			for (const auto& prefix : prefixes) {
+		if (symbol_type == 2) {
+			bool add = prefix_includes.empty() && suffix_includes.empty();
+
+			for (const auto& symbol : symbol_includes) {
+				if (name.compare(symbol) == 0) {
+					add = true;
+					break;
+				}
+			}
+
+			for (const auto& prefix : prefix_includes) {
 				if (string_starts_with(name, prefix)) {
 					add = true;
 					break;
 				}
 			}
-		}
 
-		if (!suffixes.empty()) {
-			for (const auto& suffix : suffixes) {
+			for (const auto& suffix : suffix_includes) {
 				if (string_ends_with(name, suffix)) {
 					add = true;
 					break;
 				}
 			}
-		}
 
-		if (add && !excludes.empty()) {
-			for (const auto& exclude : excludes) {
-				if (name.compare(exclude) == 0) {
+			for (const auto& symbol : symbol_excludes) {
+				if (name.compare(symbol) == 0) {
+					add = false;
+					break;
+					}
+			}
+
+			for (const auto& prefix : prefix_excludes) {
+				if (string_starts_with(name, prefix)) {
 					add = false;
 					break;
 				}
 			}
-		}
 
-		if (add) {
-			if (name.size() > line_length) {
-				line_length = name.size();
+			for (const auto& suffix : suffix_excludes) {
+				if (string_ends_with(name, suffix)) {
+					add = false;
+					break;
+				}
 			}
-			symbols.push_back({ name, value });
+
+			if (add) {
+				if (name.size() > line_length) {
+					line_length = name.size();
+				}
+				symbols.push_back({ name, value });
+			}
 		}
 	}
 
