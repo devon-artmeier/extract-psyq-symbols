@@ -241,58 +241,56 @@ int main(int argc, char* argv[])
 
 		std::string name = string_to_upper(name_buffer);
 		delete[] name_buffer;
-		
-		if (symbol_type == 2) {
-			bool add = prefix_includes.empty() && suffix_includes.empty();
 
-			for (const auto& symbol : symbol_includes) {
-				if (name.compare(symbol) == 0) {
-					add = true;
-					break;
+		bool add = prefix_includes.empty() && suffix_includes.empty();
+
+		for (const auto& symbol : symbol_includes) {
+			if (name.compare(symbol) == 0) {
+				add = true;
+				break;
+			}
+		}
+
+		for (const auto& prefix : prefix_includes) {
+			if (string_starts_with(name, prefix)) {
+				add = true;
+				break;
+			}
+		}
+
+		for (const auto& suffix : suffix_includes) {
+			if (string_ends_with(name, suffix)) {
+				add = true;
+				break;
+			}
+		}
+
+		for (const auto& symbol : symbol_excludes) {
+			if (name.compare(symbol) == 0) {
+				add = false;
+				break;
 				}
-			}
+		}
 
-			for (const auto& prefix : prefix_includes) {
-				if (string_starts_with(name, prefix)) {
-					add = true;
-					break;
-				}
+		for (const auto& prefix : prefix_excludes) {
+			if (string_starts_with(name, prefix)) {
+				add = false;
+				break;
 			}
+		}
 
-			for (const auto& suffix : suffix_includes) {
-				if (string_ends_with(name, suffix)) {
-					add = true;
-					break;
-				}
+		for (const auto& suffix : suffix_excludes) {
+			if (string_ends_with(name, suffix)) {
+				add = false;
+				break;
 			}
+		}
 
-			for (const auto& symbol : symbol_excludes) {
-				if (name.compare(symbol) == 0) {
-					add = false;
-					break;
-					}
+		if (add) {
+			if (name.size() > line_length) {
+				line_length = name.size();
 			}
-
-			for (const auto& prefix : prefix_excludes) {
-				if (string_starts_with(name, prefix)) {
-					add = false;
-					break;
-				}
-			}
-
-			for (const auto& suffix : suffix_excludes) {
-				if (string_ends_with(name, suffix)) {
-					add = false;
-					break;
-				}
-			}
-
-			if (add) {
-				if (name.size() > line_length) {
-					line_length = name.size();
-				}
-				symbols.push_back({ name, value });
-			}
+			symbols.push_back({ name, value });
 		}
 	}
 
