@@ -86,13 +86,15 @@ int main(int argc, char* argv[])
 	std::string              output_file = "";
 	std::vector<std::string> prefixes;
 	std::vector<std::string> suffixes;
+	std::vector<std::string> excludes;
 	
 	if (argc < 2) {
-		std::cout << "Usage: extract-psyq-symbols -i [input] -o [output] <-p [prefix]> <-s [suffix]>\n\n"
-		             "[input]       - Input symbol file\n"
-		             "[output]      - Output file\n"
-		             "<-p [prefix]> - Add prefix to search for\n"
-		             "<-s [suffix]> - Add suffix to search for\n";
+		std::cout << "Usage: extract-psyq-symbols -i [input] -o [output] <-p [prefix]> <-s [suffix]> <-x [exclude]>\n\n"
+		             "[input]        - Input symbol file\n"
+		             "[output]       - Output file\n"
+		             "<-p [prefix]>  - Add prefix to search for\n"
+		             "<-s [suffix]>  - Add suffix to search for\n"
+					 "<-x [exclude]> - Exclude symbol";
 		return -1;
 	}
 
@@ -131,6 +133,13 @@ int main(int argc, char* argv[])
 			return -1;
 		} else if (success > 0) {
 			suffixes.push_back(string_to_upper(argv[i]));
+			continue;
+		}
+
+		if ((success = check_argument(argc, argv, i, "x")) < 0) {
+			return -1;
+		} else if (success > 0) {
+			excludes.push_back(string_to_upper(argv[i]));
 			continue;
 		}
 
@@ -195,9 +204,6 @@ int main(int argc, char* argv[])
 		if (!read_input(input, reinterpret_cast<char*>(&value_buffer), 1)) {
 			return -1;
 		}
-		if (value_buffer > line_length) {
-			line_length = value_buffer;
-		}
 
 		char* name_buffer = new char[value_buffer + 1];
 		if (!read_input(input, name_buffer, value_buffer)) {
@@ -209,6 +215,7 @@ int main(int argc, char* argv[])
 		delete[] name_buffer;
 
 		bool add = symbol_type == 2 && prefixes.empty() && suffixes.empty();
+		
 		if (!prefixes.empty()) {
 			for (const auto& prefix : prefixes) {
 				if (string_starts_with(name, prefix)) {
@@ -217,6 +224,7 @@ int main(int argc, char* argv[])
 				}
 			}
 		}
+
 		if (!suffixes.empty()) {
 			for (const auto& suffix : suffixes) {
 				if (string_ends_with(name, suffix)) {
@@ -226,7 +234,19 @@ int main(int argc, char* argv[])
 			}
 		}
 
+		if (add && !excludes.empty()) {
+			for (const auto& exclude : excludes) {
+				if (name.compare(exclude) == 0) {
+					add = false;
+					break;
+				}
+			}
+		}
+
 		if (add) {
+			if (name.size() > line_length) {
+				line_length = name.size();
+			}
 			symbols.push_back({ name, value });
 		}
 	}
