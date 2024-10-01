@@ -130,23 +130,8 @@ int main(int argc, char* argv[])
 
 		if ((success = check_argument(argc, argv, i, "f")) < 0) {
 			return -1;
-		}
-		else if (success > 0) {
+		} else if (success > 0) {
 			symbol_includes.push_back(string_to_upper(argv[i]));
-			continue;
-		}
-
-		if ((success = check_argument(argc, argv, i, "p")) < 0) {
-			return -1;
-		} else if (success > 0) {
-			prefix_includes.push_back(string_to_upper(argv[i]));
-			continue;
-		}
-
-		if ((success = check_argument(argc, argv, i, "s")) < 0) {
-			return -1;
-		} else if (success > 0) {
-			suffix_includes.push_back(string_to_upper(argv[i]));
 			continue;
 		}
 
@@ -157,10 +142,25 @@ int main(int argc, char* argv[])
 			continue;
 		}
 
+		if ((success = check_argument(argc, argv, i, "p")) < 0) {
+			return -1;
+		} else if (success > 0) {
+			prefix_includes.push_back(string_to_upper(argv[i]));
+			continue;
+		}
+
 		if ((success = check_argument(argc, argv, i, "xp")) < 0) {
 			return -1;
 		} else if (success > 0) {
 			prefix_excludes.push_back(string_to_upper(argv[i]));
+			continue;
+		}
+
+		if ((success = check_argument(argc, argv, i, "s")) < 0) {
+			return -1;
+		}
+		else if (success > 0) {
+			suffix_includes.push_back(string_to_upper(argv[i]));
 			continue;
 		}
 
